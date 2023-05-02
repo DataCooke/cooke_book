@@ -11,7 +11,7 @@ setuptools.setup(
     description='Data Science Functions for personal use',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://github.com/byemoney/toolkit',
+    url='https://github.com/byemoney/ds_toolkit',
     license='MIT',
     packages=['ds_toolkit'],
     install_requires=['requests'],
