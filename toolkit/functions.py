@@ -1,15 +1,20 @@
+# Standard library imports
 import logging
 import time
+
+# Related third party imports
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from bayes_opt import BayesianOptimization
 from scipy import stats
-from sklearn.impute import SimpleImputer
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.model_selection import cross_validate
-from sklearn.metrics import mean_absolute_error, make_scorer
 from sklearn.feature_selection import RFE
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import mean_absolute_error, make_scorer
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import Pipeline
-import matplotlib.pyplot as plt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import xgboost as xgb
 
 
 
@@ -489,5 +494,264 @@ def get_top_features(df, num_features):
         logging.error("Failed to get top features: %s", str(e))
         return None
 
+
+def filter_columns(column_list, dataframes):
+    """
+    Filter specified columns from one or multiple pandas DataFrame(s).
+
+    Parameters:
+    column_list (list): List of column names to keep in the DataFrame(s).
+    dataframes (DataFrame or tuple): DataFrame or tuple of DataFrames to filter.
+
+    Returns:
+    DataFrame or tuple: A single DataFrame if one was passed, otherwise a tuple of filtered DataFrames.
+    """
+    if not isinstance(column_list, list):
+        raise ValueError("column_list must be a list of column names.")
+
+    # Convert a single dataframe to a tuple with a single element
+    if isinstance(dataframes, pd.DataFrame):
+        dataframes = (dataframes,)
+    elif not isinstance(dataframes, tuple):
+        raise ValueError("dataframes must be a DataFrame or a tuple of DataFrames.")
+
+    # Create a new list to store the filtered dataframes
+    filtered_dataframes = []
+
+    # Iterate over the input dataframes
+    for df in dataframes:
+        # Validate dataframe and columns
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError("Each element in dataframes must be a DataFrame.")
+        
+        for column in column_list:
+            if column not in df.columns:
+                raise ValueError(f"Column {column} not found in DataFrame.")
+        
+        # Create a new dataframe with only the desired columns
+        filtered_df = df[column_list]
+
+        # Add the new dataframe to the filtered_dataframes list
+        filtered_dataframes.append(filtered_df)
+
+    # If there is only one filtered dataframe, return it as a single dataframe
+    if len(filtered_dataframes) == 1:
+        return filtered_dataframes[0]
+
+    # Otherwise, return the filtered dataframes as a tuple
+    return tuple(filtered_dataframes)
+
+
+def xgb_hyperopt(X, y, n_iterations, param_ranges=None, eval_metric='mae', objective='reg:absoluteerror', booster='gbtree', nfold=5, early_stopping_rounds=10):
+    """
+    Perform hyperparameter tuning for XGBoost model using Bayesian Optimization.
+    
+    Parameters:
+    X (DataFrame): Features for the model.
+    y (Series or array-like): Target variable.
+    n_iterations (int): Number of iterations for Bayesian Optimization.
+    param_ranges (dict, optional): Ranges for parameters to be optimized. Default is a pre-defined dictionary.
+    eval_metric (str, optional): Evaluation metric for the model. Default is 'mae'.
+    objective (str, optional): Objective function for the model. Default is 'reg:absoluteerror'.
+    booster (str, optional): Booster type for the model. Default is 'gbtree'.
+    nfold (int, optional): Number of folds for cross validation. Default is 5.
+    early_stopping_rounds (int, optional): Number of rounds without improvement to trigger early stopping. Default is 10.
+    
+    Returns:
+    tuned_model (XGBModel): The tuned XGBoost model.
+    params (dict): The parameters used for the tuned model.
+    """
+    # Default parameter ranges
+    if param_ranges is None:
+        param_ranges = {'num_boost_round': (50, 300),
+                        'max_depth': (3, 7),
+                        'subsample': (0.7, 0.9),
+                        'colsample_bytree': (0.7, 0.9),
+                        'gamma': (0, 0.5),
+                        'min_child_weight': (1, 6)}
+
+    def xgb_evaluate(**params):
+        for param in ['max_depth', 'num_boost_round']:
+            params[param] = int(params[param])
+        params['eval_metric'] = eval_metric
+        params['objective'] = objective
+        params['booster'] = booster
+        params['nthread'] = -1
+        dtrain = xgb.DMatrix(X, label=y)
+        cv_result = xgb.cv(params, dtrain, num_boost_round=params['num_boost_round'], nfold=nfold, early_stopping_rounds=early_stopping_rounds)
+        return -1.0 * cv_result['test-'+eval_metric+'-mean'].iloc[-1]
+
+    # Error handling
+    if not isinstance(X, pd.DataFrame) or not isinstance(y, (pd.Series, np.ndarray)):
+        raise ValueError("X should be a DataFrame and y should be a Series or array-like.")
+    if n_iterations <= 0:
+        raise ValueError("n_iterations should be greater than 0.")
+    if nfold <= 0 or not isinstance(nfold, int):
+        raise ValueError("nfold should be an integer greater than 0.")
+    if early_stopping_rounds <= 0 or not isinstance(early_stopping_rounds, int):
+        raise ValueError("early_stopping_rounds should be an integer greater than 0.")
+
+    xgb_bo = BayesianOptimization(xgb_evaluate, param_ranges)
+    xgb_bo.maximize(init_points=5, n_iter=n_iterations)
+
+    params = xgb_bo.max['params']
+    params['max_depth'] = int(params['max_depth'])
+    params['num_boost_round'] = int(params['num_boost_round'])
+    params['eval_metric'] = eval_metric
+    params['objective'] = objective
+    params['booster'] = booster
+
+    tuned_model = xgb.train(params, xgb.DMatrix(X, label=y), num_boost_round=params['num_boost_round'])
+
+    return tuned_model, params
+
+
+def evaluate_model(model, X_test, y_test):
+    """
+    Evaluate a model based on the given test data.
+    
+    Parameters:
+    model (sklearn model or xgboost model): Trained model to be evaluated.
+    X_test (DataFrame or array-like): Test set features.
+    y_test (Series or array-like): Test set target variable.
+    
+    Returns:
+    abs_mean_error (float): Absolute mean error of the model.
+    median_abs_error (float): Median absolute error of the model.
+    """
+    if not hasattr(model, 'predict'):
+        raise ValueError("The model should have a 'predict' method.")
+
+    if not isinstance(X_test, (pd.DataFrame, np.ndarray)) or not isinstance(y_test, (pd.Series, np.ndarray)):
+        raise ValueError("X_test should be a DataFrame or array-like, and y_test should be a Series or array-like.")
+    
+    # Predict the target values using the trained model
+    y_pred = model.predict(X_test)
+
+    # Calculate the absolute errors
+    abs_errors = np.abs(np.ravel(y_test) - y_pred)
+
+    # Calculate the absolute mean error and median absolute error
+    abs_mean_error = abs_errors.mean()
+    median_abs_error = np.median(abs_errors)
+
+    return abs_mean_error, median_abs_error
+
+
+def increment_data(dataframe, predictor, increment_value, n_increments, direction='both'):
+    """
+    Increment a specified predictor in the dataframe and add a new row for each increment.
+    
+    Parameters:
+    dataframe (DataFrame): The input dataframe.
+    predictor (str): The predictor to be incremented.
+    increment_value (float): The value by which to increment the predictor.
+    n_increments (int): The number of increments.
+    direction (str, optional): The direction of increment ('ascending', 'descending', or 'both'). Default is 'both'.
+    
+    Returns:
+    DataFrame: The dataframe with incremented data.
+    """
+    # Error handling
+    if not isinstance(dataframe, pd.DataFrame):
+        raise ValueError("The input should be a pandas DataFrame.")
+    
+    if predictor not in dataframe.columns:
+        raise ValueError(f"The predictor should be one of the dataframe's columns. Got {predictor} instead.")
+    
+    if direction not in ['ascending', 'descending', 'both']:
+        raise ValueError("The direction should be one of 'ascending', 'descending', or 'both'.")
+    
+    # Copy the dataframe
+    df = dataframe.copy()
+    
+    # Calculate the increments
+    for i in range(1, n_increments + 1):
+        current_value = df[predictor].iloc[-1]
+        
+        if direction == 'ascending':
+            increment = increment_value
+        elif direction == 'descending':
+            increment = -increment_value
+        else: # direction == 'both'
+            increment = increment_value * i if i % 2 == 0 else -increment_value * i
+        
+        new_value = current_value + increment
+        new_row = df.iloc[[-1]].copy()
+        new_row[predictor] = new_value
+        
+        # Add the new row to the dataframe
+        df = df.append(new_row, ignore_index=True)
+    
+    # Sort the dataframe
+    df.sort_values(by=predictor, inplace=True, ignore_index=True)
+    
+    return df
+
+
+def predict_value(model, input_data, sample=1):
+    """
+    Predicts values using the model for a sample from the input data.
+    
+    Parameters:
+    model (sklearn model or similar): Trained model to make predictions.
+    input_data (DataFrame): Input data for the model.
+    sample (int, optional): Number of samples to predict. Default is 1.
+    
+    Returns:
+    DataFrame: DataFrame of input values and corresponding predictions.
+    """
+    if not hasattr(model, 'predict'):
+        raise ValueError("The model should have a 'predict' method.")
+
+    if not isinstance(input_data, pd.DataFrame):
+        raise ValueError("The input data should be a pandas DataFrame.")
+    
+    if sample <= 0:
+        raise ValueError("The sample size should be a positive integer.")
+    
+    # Randomly sample data from the input
+    sample_data = input_data.sample(n=sample)
+    
+    # Get the input headers and values
+    input_headers = list(sample_data.columns)
+    input_values = np.atleast_2d(sample_data.values)
+    
+    # Make predictions using the model
+    predictions = model.predict(input_values)
+    
+    # Append predictions to input values
+    results = np.hstack((input_values, predictions.reshape(-1,1)))
+    
+    # Append 'target' to input headers
+    result_headers = input_headers + ['target']
+    
+    # Return a DataFrame with results and headers
+    return pd.DataFrame(data=results, columns=result_headers)
+
+
+def draw_lineplot(x_values, y_values, title=None):
+    """
+    Draw a line plot with the given x and y values.
+    
+    Parameters:
+    x_values (Series or array-like): The x values for the plot.
+    y_values (Series or array-like): The y values for the plot.
+    title (str, optional): The title of the plot. If not provided, defaults to 'Line plot of Y vs X'.
+    
+    Returns:
+    None
+    """
+    if not isinstance(x_values, (pd.Series, np.ndarray)) or not isinstance(y_values, (pd.Series, np.ndarray)):
+        raise ValueError("x_values and y_values should be Series or array-like.")
+    
+    if title is None:
+        title = f'Line plot of {y_values.name} vs {x_values.name}'
+
+    plt.plot(x_values, y_values)
+    plt.xlabel(x_values.name)
+    plt.ylabel(y_values.name)
+    plt.title(title)
+    plt.show()
 
 
