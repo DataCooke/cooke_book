@@ -5,15 +5,12 @@ import pandas as pd
 from scipy import stats
 from sklearn.impute import SimpleImputer
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-import logging
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import mean_absolute_error, make_scorer
 from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
-import logging
-import time
 import matplotlib.pyplot as plt
-import logging
+
 
 
 def remove_outliers(df, columns):
