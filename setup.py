@@ -8,7 +8,7 @@ setuptools.setup(
     version='0.0.1',
     author='Jonathan Cooke',
     author_email='cooke.jon.mba@gmail.com',
-    description='Data Science Functions for personal use',
+    description='Data Science functions organized in books. Each user should have one book with thier functions to share',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/byemoney/cooke_book',
