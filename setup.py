@@ -1,18 +1,30 @@
-import setuptools
+from setuptools import setup, find_packages
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
-
-setuptools.setup(
+setup(
     name='cooke_book',
-    version='0.0.1',
+    version='1.0.0',
     author='Jonathan Cooke',
     author_email='cooke.jon.mba@gmail.com',
-    description='Data Science functions organized in books. Each user should have one book with thier functions to share',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
+    description='A Python package for data science utilities',
+    long_description='A Python package that provides various functions and utilities for data science projects.',
     url='https://github.com/byemoney/cooke_book',
-    license='MIT',
-    packages=['cooke_book],
-    install_requires=['requests'],
+    packages=find_packages(),
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+    ],
+    python_requires='>=3.7',
+    install_requires=[
+        'numpy',
+        'pandas',
+        'scikit-learn',
+        'matplotlib',
+        'category_encoders',
+        # Add any other dependencies required by your package
+    ],
 )
