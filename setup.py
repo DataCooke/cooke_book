@@ -11,7 +11,7 @@ setuptools.setup(
     description='Data Science Functions for personal use',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://github.com/byemoney/ds_toolkit',
+    url='https://github.com/byemoney/cooke_book',
     license='MIT',
     packages=['cooke_book],
     install_requires=['requests'],
