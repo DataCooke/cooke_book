@@ -1,3 +1,8 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 def draw_lineplot(x_values, y_values, title=None):
     """
     Draw a line plot with the given x and y values.

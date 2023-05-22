@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def get_top_features(df, num_features):
     """
     Retrieve top features from the feature selection DataFrame.

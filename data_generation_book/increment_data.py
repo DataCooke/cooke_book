@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def increment_data(dataframe, predictor, increment_value, n_increments, direction='both'):
     """
     Increment a specified predictor in the dataframe and add a new row for each increment.

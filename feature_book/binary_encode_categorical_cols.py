@@ -1,3 +1,8 @@
+import logging
+import pandas as pd
+import category_encoders as ce
+
+
 def binary_encode_categorical_cols(df, cat_cols=None):
     """
     Binary encode categorical columns in the DataFrame.

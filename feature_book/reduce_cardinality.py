@@ -1,3 +1,7 @@
+import pandas as pd
+import logging
+
+
 def reduce_cardinality(df, threshold=0.05):
     """
     Reduce the cardinality of categorical features in the DataFrame.

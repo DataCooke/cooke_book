@@ -1,12 +1,17 @@
 from setuptools import setup, find_packages
 
+# Read in the README for the long description
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name='cooke_book',
     version='1.0.0',
     author='Jonathan Cooke',
     author_email='cooke.jon.mba@gmail.com',
     description='A Python package for data science utilities',
-    long_description='A Python package that provides various functions and utilities for data science projects.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/byemoney/cooke_book',
     packages=find_packages(),
     classifiers=[
@@ -27,4 +32,5 @@ setup(
         'category_encoders',
         # Add any other dependencies required by your package
     ],
+    license="MIT",  # Add this line
 )

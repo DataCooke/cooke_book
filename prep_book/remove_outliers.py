@@ -1,3 +1,8 @@
+import pandas as pd
+import numpy as np
+import logging
+
+
 def remove_outliers(df, columns):
     """
     Removes rows from a DataFrame that have outlier values in the specified columns.

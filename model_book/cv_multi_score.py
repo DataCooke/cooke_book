@@ -1,3 +1,8 @@
+import pandas as pd
+import logging
+from sklearn.model_selection import cross_validate
+
+
 def cv_multi_score(model, predictors, target, scoring, folds):
     """
     Calculate cross-validation scores for a given model.
@@ -15,6 +20,7 @@ def cv_multi_score(model, predictors, target, scoring, folds):
     Returns:
     scores (dict): A dictionary of the mean and standard deviation of the 
         test scores for each scorer.
+
     """
     try:
         cv_results = cross_validate(model, predictors, target, scoring=scoring, cv=folds)

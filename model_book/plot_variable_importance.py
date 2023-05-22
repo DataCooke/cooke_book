@@ -1,3 +1,7 @@
+import matplotlib.pyplot as plt
+import logging
+
+
 def plot_variable_importance(df, metric_name='Metric Score'):
     """
     Plot the performance of the model at each step of the feature elimination.

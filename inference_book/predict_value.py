@@ -1,3 +1,7 @@
+import pandas as pd
+import numpy as np
+
+
 def predict_value(model, input_data, sample=1):
     """
     Predicts values using the model for a sample from the input data.

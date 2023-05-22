@@ -1,3 +1,7 @@
+import pandas as pd
+import logging
+
+
 def sort_columns_by_category(df, categories):
     """
     Sorts columns in a DataFrame into categories and returns a dictionary with separate DataFrames.

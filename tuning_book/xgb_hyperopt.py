@@ -1,3 +1,9 @@
+import pandas as pd
+import numpy as np
+import xgboost as xgb
+from bayes_opt import BayesianOptimization
+
+
 def xgb_hyperopt(X, y, n_iterations, param_ranges=None, eval_metric='mae', objective='reg:absoluteerror', booster='gbtree', nfold=5, early_stopping_rounds=10):
     """
     Perform hyperparameter tuning for XGBoost model using Bayesian Optimization.

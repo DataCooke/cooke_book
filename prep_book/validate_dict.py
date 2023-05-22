@@ -1,3 +1,7 @@
+import pandas as pd
+import logging
+
+
 def validate_dict(dict_keys, df):
     """
     Validates and orders columns in a DataFrame based on a dictionary.

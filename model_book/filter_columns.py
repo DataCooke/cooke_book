@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def filter_columns(column_list, dataframes):
     """
     Filter specified columns from one or multiple pandas DataFrame(s).
