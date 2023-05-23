@@ -4,6 +4,10 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# Read in the requirements.txt file
+with open("requirements.txt", "r") as req_file:
+    requirements = req_file.readlines()
+
 setup(
     name='cooke_book',
     version='1.0.0',
@@ -24,13 +28,6 @@ setup(
         'Programming Language :: Python :: 3.9',
     ],
     python_requires='>=3.7',
-    setup_requires=['category-encoders'],
-    install_requires=[
-        'numpy',
-        'pandas',
-        'scikit-learn',
-        'matplotlib',
-        # Add any other dependencies required by your package
-    ],
-    license="MIT",  # Add this line
+    install_requires=requirements,
+    license="MIT",
 )
