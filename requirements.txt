@@ -3,3 +3,4 @@ pandas
 scikit-learn
 matplotlib
 category_encoders
+bayesian_optimization
