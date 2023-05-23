@@ -24,7 +24,7 @@ setup(
         'Programming Language :: Python :: 3.9',
     ],
     python_requires='>=3.7',
-    setup_requires=['category_encoders'],
+    setup_requires=['category-encoders'],
     install_requires=[
         'numpy',
         'pandas',
