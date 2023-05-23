@@ -29,7 +29,7 @@ setup(
         'pandas',
         'scikit-learn',
         'matplotlib',
-        'category-encoders',
+        'category_encoders',
         # Add any other dependencies required by your package
     ],
     license="MIT",  # Add this line
