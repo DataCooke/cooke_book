@@ -4,7 +4,7 @@ from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
 import logging
 
 
-def date_processing(df):
+def date_preprocessing(df):
     """
     Process date columns in a DataFrame and generate new features.
 
