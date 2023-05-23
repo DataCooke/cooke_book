@@ -24,12 +24,12 @@ setup(
         'Programming Language :: Python :: 3.9',
     ],
     python_requires='>=3.7',
+    setup_requires=['category_encoders'],
     install_requires=[
         'numpy',
         'pandas',
         'scikit-learn',
         'matplotlib',
-        'category-encoders as category_encoders',
         # Add any other dependencies required by your package
     ],
     license="MIT",  # Add this line
