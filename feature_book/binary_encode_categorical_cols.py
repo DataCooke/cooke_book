@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-import category_encoders as ce
+import category-encoders as ce
 
 
 def binary_encode_categorical_cols(df, cat_cols=None):
