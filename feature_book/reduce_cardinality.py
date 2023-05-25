@@ -26,7 +26,11 @@ def reduce_cardinality(df, threshold=0.05):
     new_df = df.copy()
     for col in new_df.select_dtypes(include='object'):
         counts = new_df[col].value_counts(normalize=True)
-        categories_to_replace = counts[counts < threshold].index.tolist()
-        new_df[col] = new_df[col].where(~new_df[col].isin(categories_to_replace), 'other')
+        categories_to_replace = counts[counts <= threshold].index.tolist()
+        if len(categories_to_replace) > 3:
+            new_df[col] = new_df[col].where(new_df[col].isin(categories_to_replace), 'other').replace(['Other', 'OTHER'], 'other')
+        else:
+            new_df[col] = new_df[col].replace(['Other', 'OTHER'], 'other')
 
+    logging.info("Cardinality reduction completed.")
     return new_df
