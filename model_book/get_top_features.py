@@ -22,7 +22,7 @@ def get_top_features(df, num_features):
             raise ValueError("num_features must be greater than 0.")
 
         sorted_df = df.sort_index(ascending=False)
-        sorted_df = sorted_df['weakest feature']
+        sorted_df = sorted_df['eliminated_feature']
         top_features = sorted_df.head(num_features).tolist()
         return top_features
     except Exception as e:
