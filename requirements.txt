@@ -4,3 +4,4 @@ scikit-learn
 matplotlib
 category_encoders
 bayesian-optimization
+faker
